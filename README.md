@@ -1,10 +1,35 @@
 ## langchain rag demo system
 
+#### 简介
 ```
-一个简易langchain的rag demo系统
-model：groq:llama-3.3-70b-versatile
-Vectordb：Pinecorn
-embeddings：HuggingFace的 sentence-transformers/all-MiniLM-L6-v2
+包含
+rag、ensembel_retriever混合检索
+mcp server、mcp client等
+supervisor agent主管agent架构
 ```
 
-#### .env文件需要你自己填入你需要的哈
+#### 技术栈
+``` 
+model：
+    - qwen3-max (千问)
+    - xop3qwen1b7 (科大讯飞)
+    - GLM-4.5-Flash (智谱)
+    
+Vectordb：
+    - Pinecorn
+    - Chroma
+   
+embeddings：
+    - HuggingFace的 sentence-transformers/all-MiniLM-L6-v2
+    
+tools：
+    - duckduckgo
+```
+
+#### 调试
+```
+pip install requirements.txt
+
+langgarph dev
+```
+#### .env.example改.env 添加自己的api key

@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import TextLoader
 from langchain_community.retrievers import BM25Retriever
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -29,7 +30,7 @@ def spilt_doc(documents):
     """文本分割"""
     # 创建文本分割器
     separators = ["\n\n", "\n", " ", ""]
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100, length_function=len,
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=50, length_function=len,
                                               separators=separators)
 
     # 分割文档
@@ -40,12 +41,12 @@ def spilt_doc(documents):
 def pinecorn_embed_doc(chunks):
     """向量化"""
     # 创建向量化模型
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vector = embeddings.embed_query("天龙八部人物详解")
+    embeddings = HuggingFaceEmbeddings(model_name="moka-ai/m3e-base")
+    vector = embeddings.embed_query("天龙八部人物身份详解")
 
     # 初始化 Pinecone
     pc = Pinecone(api_key=PINECONE_API_KEY)
-    index_name = "langchain-rag-tianlongbabu"
+    index_name = "langchain-rag-tlbb"
     dimension = len(vector)
     existing_indexes = [idx.name for idx in pc.list_indexes()]
     if index_name not in existing_indexes:
@@ -72,9 +73,9 @@ def pinecorn_embed_doc(chunks):
 
 def pinecorn_vectorstore():
     pc = Pinecone(api_key=PINECONE_API_KEY)
-    index_name = "langchain-rag-tianlongbabu"
+    index_name = "langchain-rag-tlbb"
     index = pc.Index(index_name)
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="moka-ai/m3e-base")
     vector_store = PineconeVectorStore(index=index, embedding=embeddings)
     return vector_store
 
@@ -84,6 +85,35 @@ def bm25_retriever(chunks):
     bm25_retriever = BM25Retriever.from_documents(chunks)
     bm25_retriever.k = 3
     return bm25_retriever
+
+
+def chroma_embed_doc(chunks):
+    """chroma向量化"""
+
+    ids = [f"tlbb_{i}" for i in range(len(chunks))]
+
+    vectorstore = Chroma(
+        collection_name="langchain-rag-tlbb",
+        embedding_function=HuggingFaceEmbeddings(model_name="moka-ai/m3e-base"),
+        persist_directory=ROOTPATH / "doc/chroma_tlbb",
+    )
+
+    vectorstore.add_documents(
+        documents=chunks,
+        ids=ids
+    )
+
+    return vectorstore
+
+
+def chroma_vectorstore():
+    """chroma检索"""
+    vectorstore = Chroma(
+        collection_name="langchain-rag-tlbb",
+        embedding_function=HuggingFaceEmbeddings(model_name="moka-ai/m3e-base"),
+        persist_directory=ROOTPATH / "doc/chroma_tlbb",
+    )
+    return vectorstore
 
 
 if __name__ == '__main__':

@@ -50,3 +50,28 @@ class MessageTrimmerMiddleware(AgentMiddleware):
             return {"messages": trimmed_messages}
 
         return None
+
+
+class MaxCallsMiddleware(AgentMiddleware):
+    """
+    最大调用次数中间件 - 限制模型调用次数
+
+    before_model: 模型调用前执行
+    after_model: 模型响应后执行
+    """
+
+    def __init__(self, max_calls=3):
+        super().__init__()
+        self.max_calls = max_calls
+        self.call_count = 0  # 统计调用次数
+
+    def before_model(self, state, runtime):
+        """模型调用前"""
+        if self.call_count > self.max_calls:
+            print("\n[中间件] 已达到最大调用次数，停止调用模型")
+            raise ValueError(f"已达到最大调用次数限制: {self.max_calls}")
+        return None
+
+    def after_model(self, state, runtime):
+        self.call_count += 1
+        return None
